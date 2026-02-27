@@ -34,7 +34,7 @@ const Login: React.FC = () => {
     e.preventDefault();
     setError(null);
     try {
-      await api.post('/login', { email, password });
+      const response = await api.post('/login', { email, password });
       //alert(`ようこそ、${response.data.user.username}さん！`);
       window.location.reload(); // 状態更新のためにリロード（暫定）
     } catch (err: any) {

@@ -39,7 +39,7 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    let timer: any;
+    let timer: NodeJS.Timeout;
     if (isLoggedIn && (currentStatus === 1 || currentStatus === 3)) {
       timer = setInterval(() => setTotalSeconds(prev => prev + 1), 1000);
     }
