@@ -52,12 +52,51 @@ const App: React.FC = () => {
   };
 
   const handleAction = async (nextStatus: number) => {
+    setLoading(true); // 取得中にスピナーを表示
+
+    // 位置情報を取得する Promise
+    const getPosition = () => {
+      return new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true, // 高精度（GPS優先）
+          timeout: 10000,          // 10秒でタイムアウト
+          maximumAge: 0            // キャッシュを利用しない
+        });
+      });
+    };
+
     try {
-      await api.post('/attendance/log', { status: nextStatus });
+      let lat: number | null = null;
+      let lng: number | null = null;
+
+      try {
+        // 位置情報の取得を待機
+        const pos = await getPosition();
+        lat = pos.coords.latitude;
+        lng = pos.coords.longitude;
+      } catch (geoErr: any) {
+        console.error("位置情報の取得に失敗:", geoErr);
+        alert("位置情報が取得できませんでした。ブラウザの設定で許可してください。");
+        setLoading(false);
+        return; 
+      }
+
+      // バックエンドの API に status と座標を送信
+      await api.post('/attendance/log', { 
+        status: nextStatus,
+        lat: lat,
+        lng: lng
+      });
+
+      // 最新の状態を再取得
       const res = await api.get('/attendance/current');
       setCurrentStatus(res.data.status);
       setTotalSeconds(res.data.totalSeconds || 0);
-    } catch (err) { alert("記録失敗"); }
+    } catch (err) {
+      alert("通信エラーが発生しました");
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (loading) return (
